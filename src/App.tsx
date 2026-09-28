@@ -77,6 +77,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [busy, setBusy] = useState(false);
   const [combinationName, setCombinationName] = useState('');
+  const [pdfNamePreference, setPdfNamePreference] = useState<{ projectId: string; value: boolean } | null>(null);
   const [repeatDraft, setRepeatDraft] = useState({ left: 1, top: 1, right: 1, bottom: 1 });
   const [mergeTarget, setMergeTarget] = useState('');
   const [projectsOpen, setProjectsOpen] = useState(false);
@@ -195,6 +196,7 @@ export default function App() {
 
   const chart = project.charts.find((item) => item.id === selectedChartId) || project.charts[0] || null;
   const cell = chart && selectedCell ? chart.cells[selectedCell.row]?.[selectedCell.col] : null;
+  const includeChartNames = pdfNamePreference?.projectId === project.id ? pdfNamePreference.value : project.charts.length > 1;
 
   useEffect(() => {
     if (!chart) return;
@@ -580,7 +582,7 @@ export default function App() {
         {chart ? <div className="inspector-section compact-section"><h2>Repeat boundary</h2><p className="section-help">Enter cell positions, starting at 1 from the top left.</p><div className="repeat-grid">{(['left', 'top', 'right', 'bottom'] as const).map((key) => <label key={key}>{key}<input type="number" min="1" value={repeatDraft[key]} onChange={(event) => setRepeatDraft((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</div><div className="repeat-actions"><button className="secondary-button" onClick={applyRepeat}>Set boundary</button><button className="underlined-button" onClick={() => commit((current) => updateChart(current, chart.id, (item) => ({ ...item, repeat: null })))} disabled={!chart.repeat}>Clear</button></div></div> : null}
         {project.palette.length > 1 ? <div className="inspector-section compact-section"><h2>Merge color groups</h2><p className="section-help">Move every cell in the active group into another group.</p><div className="merge-row"><select aria-label="Merge into" value={mergeTarget} onChange={(event) => setMergeTarget(event.target.value)}><option value="">Merge into…</option>{project.palette.filter((entry) => entry.id !== activeGroupId).map((entry) => <option value={entry.id} key={entry.id}>{entry.label}</option>)}</select><button className="secondary-button" disabled={!mergeTarget || !activeGroupId} onClick={mergeGroup}>Merge</button></div></div> : null}
         <div className="inspector-section combinations"><h2>Saved color combinations</h2>{project.combinations.length ? <div className="combination-list">{project.combinations.map((item) => <button key={item.id} className={project.activeCombinationId === item.id ? 'active' : ''} onClick={() => applyCombination(item.id)}><span className="combination-swatches">{project.palette.map((entry) => <i key={entry.id} style={{ background: item.colors[entry.id] || entry.originalColor }} />)}</span><span>{item.name}</span></button>)}</div> : <p className="quiet-note">Save a palette to compare it later.</p>}<div className="save-combination"><input placeholder="Combination name" aria-label="Combination name" value={combinationName} onChange={(event) => setCombinationName(event.target.value)} /><button className="secondary-button" disabled={!chart} onClick={saveCombination}>Save</button></div></div>
-        <div className="inspector-footer"><button className="pdf-button" disabled={!chart || busy} onClick={async () => { setBusy(true); try { await savePdf(project); setToast('PDF downloaded.'); } catch (cause) { setToast(cause instanceof Error ? cause.message : 'PDF export failed.'); } finally { setBusy(false); } }}><Icon name="download" /> Save as PDF</button><p>Chart and color key included</p></div>
+        <div className="inspector-footer"><label className="pdf-option"><input type="checkbox" checked={includeChartNames} disabled={!chart} onChange={(event) => setPdfNamePreference({ projectId: project.id, value: event.target.checked })} /> Include chart names in PDF</label><button className="pdf-button" disabled={!chart || busy} onClick={async () => { setBusy(true); try { await savePdf(project, { includeChartNames }); setToast('PDF downloaded.'); } catch (cause) { setToast(cause instanceof Error ? cause.message : 'PDF export failed.'); } finally { setBusy(false); } }}><Icon name="download" /> Save as PDF</button><p>Color key appears beside each chart.</p></div>
       </aside>
     </div>
     {importFile ? <ImportWizard source={importFile.src} fileName={importFile.name} onClose={() => setImportFile(null)} onImport={onImport} /> : null}

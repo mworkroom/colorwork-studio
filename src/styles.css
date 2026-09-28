@@ -105,6 +105,8 @@ h1,h2,h3,p{margin-top:0}
 .save-combination{display:flex;gap:7px}
 .save-combination input{min-width:0;flex:1}
 .inspector-footer{padding-top:2px}
+.pdf-option{display:flex;align-items:center;gap:10px;margin-bottom:13px;font-size:15px;color:#343d43;cursor:pointer}
+.pdf-option input{width:18px;height:18px;margin:0;flex:none}
 .pdf-button{width:100%;height:54px;background:#111315;color:#fff;border:0;font-size:17px}
 .inspector-footer p{font-size:14px;color:#64707a;margin:9px 0 0}
 .empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-height:590px;padding:70px 24px}

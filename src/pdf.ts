@@ -2,7 +2,7 @@ import type { Project, SymbolKind } from './model';
 import { fileSafeName } from './storage';
 import { hexRgb } from './image';
 
-export async function savePdf(project: Project) {
+export async function savePdf(project: Project, { includeChartNames = project.charts.length > 1 }: { includeChartNames?: boolean } = {}) {
   if (!project.charts.length) throw new Error('Import a chart before saving a PDF.');
   const { jsPDF } = await import('jspdf');
   const first = project.charts[0];
@@ -33,16 +33,22 @@ export async function savePdf(project: Project) {
     if (index) pdf.addPage('a4', orientation);
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
+    const showChartName = includeChartNames && chart.name !== project.name;
     pdf.setTextColor(20, 20, 20);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(16);
     pdf.text(project.name, 15, 16);
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(11);
-    if (chart.name !== project.name) pdf.text(chart.name, 15, 23);
-    const cell = Math.min(8, (pageWidth - 42) / chart.cols, (pageHeight - 65) / chart.rows);
-    const x0 = Math.max(20, (pageWidth - chart.cols * cell) / 2);
-    const y0 = 36;
+    if (showChartName) pdf.text(chart.name, 15, 23);
+    pdf.setFontSize(9);
+    const legendWidth = Math.min(48, Math.max(30, ...project.palette.map((entry) => pdf.getTextWidth(entry.label) + 10)));
+    const left = 20;
+    const gap = 8;
+    const chartAreaWidth = pageWidth - left - 15 - legendWidth - gap;
+    const y0 = showChartName ? 35 : 28;
+    const cell = Math.min(8, chartAreaWidth / chart.cols, (pageHeight - y0 - 14) / chart.rows);
+    const x0 = left + (chartAreaWidth - chart.cols * cell) / 2;
     chart.cells.forEach((line, r) => line.forEach((item, c) => {
       const color = item.noStitch ? '#DFE4E8' : groupColors.get(item.groupId || '') || item.sourceColor;
       const [red, green, blue] = hexRgb(color);
@@ -69,18 +75,35 @@ export async function savePdf(project: Project) {
     pdf.setFontSize(Math.max(5, Math.min(8, cell * 1.7)));
     for (let r = 0; r < chart.rows; r++) pdf.text(String(chart.rowStart + r * chart.rowStep), x0 - 2.2, y0 + (r + 0.7) * cell, { align: 'right' });
     for (let c = 0; c < chart.cols; c++) pdf.text(String(chart.colStart + c * chart.colStep), x0 + (c + 0.5) * cell, y0 - 2.2, { align: 'center' });
-    let legendX = 15;
-    let legendY = y0 + chart.rows * cell + 10;
+    const legendX = x0 + chart.cols * cell + gap;
+    let legendY = y0 + 15;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text('Color key', legendX, y0 + 4);
+    pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
     for (const entry of project.palette) {
-      const labelWidth = Math.max(18, pdf.getTextWidth(entry.label) + 10);
-      if (legendX + labelWidth > pageWidth - 15) { legendX = 15; legendY += 8; }
+      const lines = pdf.splitTextToSize(entry.label, legendWidth - 8) as string[];
+      const rowHeight = Math.max(8, lines.length * 4 + 2);
+      if (legendY + rowHeight > pageHeight - 14) {
+        pdf.addPage('a4', orientation);
+        pdf.setTextColor(20, 20, 20);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.text(project.name, 15, 16);
+        pdf.setFontSize(10);
+        pdf.text('Color key (continued)', legendX, 29);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        legendY = 40;
+      }
       const [red, green, blue] = hexRgb(entry.color);
       pdf.setFillColor(red, green, blue);
       pdf.setDrawColor(95, 95, 95);
       pdf.rect(legendX, legendY - 4, 5, 5, 'FD');
-      pdf.text(entry.label, legendX + 7, legendY);
-      legendX += labelWidth;
+      pdf.setTextColor(55, 55, 55);
+      pdf.text(lines, legendX + 8, legendY);
+      legendY += rowHeight;
     }
   });
   pdf.save(`${fileSafeName(project.name)}.pdf`);
