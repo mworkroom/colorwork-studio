@@ -415,6 +415,17 @@ export default function App() {
     commit((current) => ({ ...current, palette: current.palette.map((entry) => entry.id === id ? change(entry) : entry), activeCombinationId: null }));
   }
 
+  function moveGroup(id: string, direction: -1 | 1) {
+    commit((current) => {
+      const index = current.palette.findIndex((entry) => entry.id === id);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.palette.length) return current;
+      const palette = current.palette.slice();
+      [palette[index], palette[nextIndex]] = [palette[nextIndex], palette[index]];
+      return { ...current, palette };
+    });
+  }
+
   function applyCellEdit(row: number, col: number, record: boolean) {
     if (!chart) return;
     const change = (current: Project) => updateCell(current, chart.id, row, col, (item) => {
@@ -542,12 +553,13 @@ export default function App() {
           {fileBackup.kind === 'ready' ? <button className="underlined-button" onClick={() => void chooseBackupFolder()}>Change folder</button> : null}
           <p className="backup-browser-note">Changes also save in this browser. Download JSON remains available above.</p>
         </div>
-        <div className="inspector-section"><h2>Yarn colors</h2><p className="section-help">Choose a color to update every matching cell.</p>
-          {project.palette.length ? <div className="palette-list">{project.palette.map((entry) => <div className={`palette-row ${activeGroupId === entry.id ? 'palette-active' : ''}`} key={entry.id}>
+        <div className="inspector-section"><h2>Yarn colors</h2><p className="section-help">Choose a color to update every matching cell. Move colors to match your pattern’s order.</p>
+          {project.palette.length ? <div className="palette-list">{project.palette.map((entry, index) => <div className={`palette-row ${activeGroupId === entry.id ? 'palette-active' : ''}`} key={entry.id}>
             <button className="group-label" onClick={() => { setActiveGroupId(entry.id); setTool('paint'); }} title={`Paint with ${entry.label}`}>{entry.label}</button>
             <input type="color" aria-label={`${entry.label} color`} value={HEX.test(entry.color) ? entry.color : '#888888'} onChange={(event) => changePalette(entry.id, (current) => ({ ...current, color: event.target.value }))} />
             <input className="hex-input" aria-label={`${entry.label} hex color`} key={`${entry.id}-${entry.color}`} defaultValue={entry.color} onBlur={(event) => { const value = event.target.value.trim(); if (HEX.test(value) && value.toUpperCase() !== entry.color.toUpperCase()) changePalette(entry.id, (current) => ({ ...current, color: value.toUpperCase() })); else event.target.value = entry.color; }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
             <input className="name-input" aria-label={`${entry.label} yarn name`} defaultValue={entry.label} key={`${entry.id}-${entry.label}`} onBlur={(event) => { const value = event.target.value.trim(); if (value && value !== entry.label) changePalette(entry.id, (current) => ({ ...current, label: value })); }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
+            <div className="palette-order-actions"><button type="button" aria-label={`Move ${entry.label} up`} title={`Move ${entry.label} up`} disabled={index === 0} onClick={() => moveGroup(entry.id, -1)}>↑</button><button type="button" aria-label={`Move ${entry.label} down`} title={`Move ${entry.label} down`} disabled={index === project.palette.length - 1} onClick={() => moveGroup(entry.id, 1)}>↓</button></div>
           </div>)}</div> : <p className="quiet-note">Colors appear here after you import a chart.</p>}
           <button className="secondary-button full add-group-button" onClick={addGroup} disabled={!chart}><Icon name="plus" size={17} /> Add color group</button>
           {project.palette.length ? <button className="underlined-button" onClick={() => commit((current) => ({ ...current, palette: current.palette.map((entry) => ({ ...entry, color: entry.originalColor })), activeCombinationId: null }))}>Reset to original colors</button> : null}

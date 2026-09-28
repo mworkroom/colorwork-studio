@@ -59,12 +59,15 @@ h1,h2,h3,p{margin-top:0}
 .inspector-section h2{font-size:22px;letter-spacing:-.5px;margin-bottom:4px}
 .section-help{color:#64707b;font-size:15px;line-height:1.4;margin-bottom:21px}
 .palette-list{display:flex;flex-direction:column;gap:11px}
-.palette-row{display:grid;grid-template-columns:34px 48px 94px minmax(80px,1fr);align-items:center;gap:8px;padding:5px 4px;border-radius:7px}
+.palette-row{display:grid;grid-template-columns:28px 44px 86px minmax(65px,1fr) 72px;align-items:center;gap:6px;padding:5px 4px;border-radius:7px}
 .palette-row.palette-active{background:#f3f5f4}
 .group-label{border:0;background:none;padding:0;font-size:17px;font-weight:700;text-align:left}
-.palette-row input[type=color]{width:48px;height:48px;padding:0;border:1px solid #aeb5b9;border-radius:5px;background:transparent;cursor:pointer}
+.palette-row input[type=color]{width:44px;height:48px;padding:0;border:1px solid #aeb5b9;border-radius:5px;background:transparent;cursor:pointer}
 .palette-row input[type=color]::-webkit-color-swatch-wrapper{padding:0}
 .palette-row input[type=color]::-webkit-color-swatch{border:none;border-radius:4px}
+.palette-order-actions{display:flex;gap:4px}
+.palette-order-actions button{width:34px;height:44px;border:1px solid #cbd2d7;border-radius:6px;background:#fff;color:#2a3339;font-size:21px;line-height:1}
+.palette-order-actions button:hover:not(:disabled){background:#eef2f5}
 .hex-input,.name-input,.save-combination input,.merge-row select,.cell-inspector select,.inline-label select,.repeat-grid input,.import-settings input{height:44px;border:1px solid #cbd2d7;border-radius:6px;background:#fff;color:#252a2e;padding:0 10px;font-size:14px;min-width:0}
 .hex-input{text-transform:uppercase}
 .name-input{width:100%}
@@ -142,9 +145,10 @@ h1,h2,h3,p{margin-top:0}
 .workbench{padding:20px 24px}
 .workspace{grid-template-columns:minmax(0,1fr) 365px}
 .inspector{padding:20px}
-.palette-row{grid-template-columns:26px 40px 82px minmax(55px,1fr);gap:6px}
+.palette-row{grid-template-columns:26px 40px 78px minmax(55px,1fr) 68px;gap:5px}
 .palette-row input[type=color]{width:40px;height:44px}
-.hex-input,.name-input{font-size:13px;padding:0 6px}
+.palette-order-actions button{width:32px}
+.hex-input,.name-input{font-size:14px;padding:0 6px}
 .tool-grid button{font-size:12px}
 }
 @media(max-width:900px){.workspace{display:block}
@@ -163,6 +167,9 @@ h1,h2,h3,p{margin-top:0}
 .inspector-footer{align-self:start}
 }
 @media(max-width:620px){.header-actions{width:100%;justify-content:space-between}
+.palette-row{grid-template-columns:26px 40px minmax(74px,1fr) 68px;gap:6px}
+.palette-row .name-input{grid-column:2 / -1;width:100%}
+.palette-order-actions{grid-column:4;grid-row:1}
 .header-link{font-size:13px;padding:8px 3px}
 .header-actions .primary-button{font-size:13px;padding:0 10px}
 .workbench{padding:18px 12px}
